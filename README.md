@@ -12,7 +12,7 @@ A Python-based tool for generating high-precision mass spectrometry transition l
 - **High-Precision Calculations**: IUPAC 2016 atomic masses with exact mass computation
 - **Multi-Charge Support**: Charge states 1+ to 5+ for high-molecular-weight species
 - **Isotope Labeling**: Support for ²H, ¹³C, ¹⁵N, ¹⁸O metabolic labeling studies
-- **Skyline Compatible**: Native CSV export for Skyline MS import
+- **[Skyline](https://skyline.ms) Compatible**: Native CSV export for direct import into Skyline MS
 - **Dual Interface**: Command-line (CLI) and graphical (GUI) options
 - **Dynamic Configuration**: User-defined ranges for fatty acids and long-chain bases
 
