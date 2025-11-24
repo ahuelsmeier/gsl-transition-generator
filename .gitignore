@@ -1,0 +1,29 @@
+# Python temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+.env
+
+# IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts (PyInstaller)
+build/
+dist/
+*.spec
+
+# Configuration files (user-specific)
+*.log
+gsl_config.json
+
+# OS files
+.DS_Store
+Thumbs.db
