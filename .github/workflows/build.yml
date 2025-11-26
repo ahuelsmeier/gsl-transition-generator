@@ -33,7 +33,7 @@ jobs:
         with:
           nuitka-version: main
           script-name: gui_gslgen_v10.py
-          onefile: true
+          mode: onefile
           enable-plugins: pyside6
           windows-console-mode: disable
 
