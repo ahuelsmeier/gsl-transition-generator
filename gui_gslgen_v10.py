@@ -7,7 +7,7 @@ A graphical interface for generating lipid transition lists
 __author__ = "Andreas J. Hülsmeier"
 __copyright__ = "Copyright 2025, Andreas J. Hülsmeier / University of Zurich, University Hospital Zurich"
 __license__ = "MIT"
-__version__ = "1.0"
+__version__ = "1.0.1"  # Version 1.0.1: Fixed pandas FutureWarning for pandas 3.0 compatibility
 __maintainer__ = "Andreas J. Hülsmeier"
 __email__ = "andreas.huelsmeier@uzh.ch"
 __status__ = "Prototype"
@@ -649,9 +649,9 @@ please visit the project repository for citation information:</p>
         """Set window icon based on platform"""
         import platform
         import os
+        import sys
 
         system = platform.system()
-
         if system == "Windows":
             icon_file = "app_icon.ico"
         elif system == "Darwin":
@@ -659,10 +659,21 @@ please visit the project repository for citation information:</p>
         else:
             icon_file = "icon_256.png"
 
-        if os.path.exists(icon_file):
-            self.setWindowIcon(QIcon(icon_file))
+        # Check if running as Nuitka onefile
+        if getattr(sys, 'frozen', False):
+            # Running as compiled executable
+            base_path = os.path.dirname(sys.argv[0])
         else:
-            print(f"Warning: Icon file '{icon_file}' not found")
+            # Running as script
+            base_path = os.path.dirname(__file__)
+
+        icon_path = os.path.join(base_path, icon_file)
+
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+        else:
+            print(f"Warning: Icon file '{icon_file}' not found at {icon_path}")
+
 
     def exit_application(self):
         """Exit the application with confirmation"""
