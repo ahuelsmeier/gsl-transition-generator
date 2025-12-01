@@ -6,7 +6,7 @@ GSL + Ceramide Transition Generator - Version 1.0
 author: Andreas J. Hülsmeier
 copyright: Copyright 2025, Andreas J. Hülsmeier / University of Zurich, University Hospital Zurich
 license: MIT
-version: 1.0
+version: 1.0.1
 maintainer: Andreas J. Hülsmeier
 email: andreas.huelsmeier@uzh.ch
 status: Prototype
@@ -2458,14 +2458,14 @@ def add_isotope_labels(df: pd.DataFrame, isotope: str = 'M2DN15',
         else:
             return isotope
 
-    heavy['Isotope Token'] = heavy['Molecule List Name'].apply(get_isotope_token)
+    heavy.loc[:, 'Isotope Token'] = heavy['Molecule List Name'].apply(get_isotope_token)
 
     # Calculate mass shift for each row
     def get_mass_shift(iso_token):
         isotope_composition = parse_isotope_label(iso_token)
         return calculate_isotope_mass_shift(isotope_composition)
 
-    heavy['Mass Shift'] = heavy['Isotope Token'].apply(get_mass_shift)
+    heavy.loc[:, 'Mass Shift'] = heavy['Isotope Token'].apply(get_mass_shift)
 
     def to_heavy_adduct(adduct, iso_token):
         """
@@ -2487,14 +2487,14 @@ def add_isotope_labels(df: pd.DataFrame, isotope: str = 'M2DN15',
             count=1
         )
 
-    heavy['Precursor Adduct'] = [
+    heavy.loc[:, 'Precursor Adduct'] = [
         to_heavy_adduct(a, iso) for a, iso in
         zip(heavy['Precursor Adduct'], heavy['Isotope Token'])
     ]
 
     # Calculate PRECURSOR m/z with mass shift
     if 'Precursor m/z' in heavy.columns:
-        heavy['Precursor m/z'] = heavy.apply(
+        heavy.loc[:, 'Precursor m/z'] = heavy.apply(
             lambda row: round(row['Precursor m/z'] + row['Mass Shift'] / abs(row['Precursor Charge']), 4)
             if pd.notna(row['Precursor m/z']) and row['Precursor m/z'] != '' else row['Precursor m/z'],
             axis=1
@@ -2507,7 +2507,7 @@ def add_isotope_labels(df: pd.DataFrame, isotope: str = 'M2DN15',
         return any(keyword.lower() in product_lower for keyword in keywords)
 
     # Update product adduct text
-    heavy['Product Adduct'] = [
+    heavy.loc[:, 'Product Adduct'] = [
         to_heavy_adduct(a, iso) if should_label_product(n, f) else a
         for a, n, f, iso in zip(heavy['Product Adduct'], heavy['Product Name'],
                                 heavy['Product Formula'], heavy['Isotope Token'])
@@ -2515,7 +2515,7 @@ def add_isotope_labels(df: pd.DataFrame, isotope: str = 'M2DN15',
 
     # Calculate PRODUCT m/z for labeled products
     if 'Product m/z' in heavy.columns:
-        heavy['Product m/z'] = heavy.apply(
+        heavy.loc[:, 'Product m/z'] = heavy.apply(
             lambda row: round(row['Product m/z'] + row['Mass Shift'], 4)
             if pd.notna(row['Product m/z']) and row['Product m/z'] != '' and
                should_label_product(row['Product Name'], row['Product Formula'])
