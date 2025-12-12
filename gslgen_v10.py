@@ -6,7 +6,7 @@ GSL + Ceramide Transition Generator - Version 1.0
 author: Andreas J. Hülsmeier
 copyright: Copyright 2025, Andreas J. Hülsmeier / University of Zurich, University Hospital Zurich
 license: MIT
-version: 1.0.1
+version: 1.0.2
 maintainer: Andreas J. Hülsmeier
 email: andreas.huelsmeier@uzh.ch
 status: Prototype
@@ -734,9 +734,13 @@ class GSLFragmentRules:
         """
         GM1_HEADGROUP_LOSSES = {
             "HG(-Neu5Ac,309)": {'C': 11, 'H': 19, 'N': 1, 'O': 9},      # Neu5Ac
-            "HG(-Neu5AcHexNAcHex,674)": {'C': 25, 'H': 42, 'N': 2, 'O': 19}, # not the dehydrated HG
-            "HG(-Neu5AcHexNAcHex2,836)": {'C': 31, 'H': 52, 'N': 2, 'O': 24}, # not the dehydrated HG
+            "HG(-Neu5Ac,291)": {'C': 11, 'H': 17, 'N': 1, 'O': 8},      # dehydrated Neu5Ac
+            "HG(-Neu5AcHexNAcHex,674)": {'C': 25, 'H': 42, 'N': 2, 'O': 19}, # not dehydrated
+            "HG(-Neu5AcHexNAcHex,656)": {'C': 25, 'H': 40, 'N': 2, 'O': 18}, # dehydrated
+            "HG(-Neu5AcHexNAcHex2,836)": {'C': 31, 'H': 52, 'N': 2, 'O': 24}, # not dehydrated
+            "HG(-Neu5AcHexNAcHex2,818)": {'C': 31, 'H': 50, 'N': 2, 'O': 23}, # dehydrated
             "HG(-Neu5AcHexNAcHex3,998)": {'C': 37, 'H': 62, 'N': 2, 'O': 29}, # Entire GM1 headgroup, not dehydrated
+            "HG(-Neu5AcHexNAcHex3,980)": {'C': 37, 'H': 60, 'N': 2, 'O': 28}, # Entire GM1 headgroup, dehydrated
             "HG(-Neu5AcHexNAcHex3,1016)": {'C': 37, 'H': 64, 'N': 2, 'O': 30}, # Entire GM1 headgroup, not dehydrated, plus H2O
         }
 
@@ -1962,8 +1966,8 @@ def get_recommended_charges_for_lipid(lipid_class: str) -> List[int]:
     if LipidDatabase.is_ceramide_class(lipid_class):
         return [1]
     else:
-        small_gsl = ['Hex', 'SM4', 'Lac', 'SHex2', 'LC3', 'LC4', 'GA1', 'GA2']
-        medium_gsl = ['GM3', 'GM2', 'GM1', 'GD3']
+        small_gsl = ['Hex', 'SM4', 'Lac', 'SHex2', 'LC3', 'LC4', 'GA1', 'GA2', 'GM3', 'GM2', 'GM1']
+        medium_gsl = ['GD3']
         large_gsl = ['GD2', 'GD1a', 'GD1b', 'GD1c', 'GT3', 'GT2']
         very_large_gsl = ['GT1a', 'GT1b', 'GQ1', 'GP1']
 
