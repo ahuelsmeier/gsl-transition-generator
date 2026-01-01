@@ -23,6 +23,7 @@ dist/
 # Configuration files (user-specific)
 *.log
 gsl_config.json
+.~lock.*#
 
 # OS files
 .DS_Store
