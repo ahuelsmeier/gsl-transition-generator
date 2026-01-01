@@ -34,6 +34,7 @@ jobs:
           nuitka-version: main
           script-name: gui_gslgen.py
           mode: onefile
+          follow-imports: true
           enable-plugins: pyside6
           windows-console-mode: disable
           mingw64: true
