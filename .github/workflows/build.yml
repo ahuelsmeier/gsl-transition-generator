@@ -32,7 +32,7 @@ jobs:
         uses: Nuitka/Nuitka-Action@main
         with:
           nuitka-version: main
-          script-name: gui_gslgen_v10.py
+          script-name: gui_gslgen.py
           mode: onefile
           enable-plugins: pyside6
           windows-console-mode: disable
