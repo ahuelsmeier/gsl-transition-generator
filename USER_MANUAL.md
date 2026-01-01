@@ -49,24 +49,26 @@ II. Install the required dependencies via terminal/command prompt:
 bash
 pip install pandas PySide6
 
-III. Place gslgen_v10.py (Backend), gui_gslgen_v10.py (Frontend) and icon_256.png in the same directory.
+III. Place gslgen.py (Backend), gui_gslgen.py (Frontend) and icon_256.png in the same directory.
 IV. Launch the application:
 
     
 GUI user interface
 
 bash
-python gui_gslgen_v10.py
+python gui_gslgen.py
 
 Basic examples for cli usage
 
-python gslgen_v10.py --lipid-class GM1 --charge-states 1 2 --output gm1_transitions.csv
+python gslgen.py --lipid-class GM1 --charge-states 1 2 --output gm1_transitions.csv
+
 With isotope labels
 
-python gslgen_v10.py --lipid-class Cer --add-labels --output cer_labeled.csv
+python gslgen.py --lipid-class Cer --add-labels --output cer_labeled.csv
+
 See all options
 
-python gslgen_v10.py --help
+python gslgen.py --help
 
 3. User Interface Guide
 

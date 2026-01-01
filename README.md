@@ -36,27 +36,29 @@ cd gsl-transition-generator
 
 Launch GUI
 
-python gui_gslgen_v10.py
+python gui_gslgen.py
 
 
 ##  Usage
 
 ### Graphical Interface (Recommended)
 
-python gui_gslgen_v10.py
+python gui_gslgen.py
 
 
 ### Command-Line Interface
 
 Basic example
 
-python gslgen_v10.py --lipid-class GM1 --charge-states 1 2 --output gm1_transitions.csv
+python gslgen.py --lipid-class GM1 --charge-states 1 2 --output gm1_transitions.csv
+
 With isotope labels
 
-python gslgen_v10.py --lipid-class Cer --add-labels --output cer_labeled.csv
+python gslgen.py --lipid-class Cer --add-labels --output cer_labeled.csv
+
 View all options
 
-python gslgen_v10.py --help
+python gslgen.py --help
 
 
 ##  Documentation
