@@ -7,7 +7,7 @@ A graphical interface for generating lipid transition lists
 __author__ = "Andreas J. Hülsmeier"
 __copyright__ = "Copyright 2025, Andreas J. Hülsmeier / University of Zurich, University Hospital Zurich"
 __license__ = "MIT"
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 __maintainer__ = "Andreas J. Hülsmeier"
 __email__ = "andreas.huelsmeier@uzh.ch"
 __status__ = "Prototype"
@@ -34,6 +34,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+
 class ConfigDialog(QDialog):
     """Dialog for configuring LCB and fatty acid selections"""
 
@@ -48,40 +49,55 @@ class ConfigDialog(QDialog):
 
         # ========== LCB SELECTION ==========
 
-                # LCB Selection for Standard Ceramides
+        # 1. Standard Ceramides
         layout.addWidget(QLabel("Standard Ceramide LCBs (2 OH) - Select multiple:"))
         self.lcb_list_standard = QListWidget()
         self.lcb_list_standard.setSelectionMode(QAbstractItemView.MultiSelection)
 
-        standard_lcbs = ["16:0;2", "16:1;2", "17:0;2", "17:1;2",
-                         "18:0;2", "18:0;3", "18:1;2", "18:2;2",
-                         "19:0;2", "19:1;2", "20:0;2", "20:1;2"]
+        # FIX: Load options from backend (gslgen.py) instead of hardcoding
+        # This ensures all supported chains defined in the backend are visible here
+        if hasattr(gslgen, 'SUPPORTED_STANDARD_LCBS'):
+            standard_options = gslgen.SUPPORTED_STANDARD_LCBS
+        else:
+            # Fallback if backend variable is missing
+            standard_options = ["16:0;2", "16:1;2", "17:0;2", "17:1;2",
+                                "18:0;2", "18:0;3", "18:1;2", "18:2;2",
+                                "19:0;2", "19:1;2", "20:0;2", "20:1;2"]
 
-        for lcb in standard_lcbs:
+        for lcb in standard_options:
             self.lcb_list_standard.addItem(lcb)
 
+        # Restore saved selections
+        current_std_selection = config["lcb_selections"].get("standard", [])
         for i in range(self.lcb_list_standard.count()):
             item = self.lcb_list_standard.item(i)
-            if item.text() in config["lcb_selections"]["standard"]:
+            if item.text() in current_std_selection:
                 item.setSelected(True)
 
         layout.addWidget(self.lcb_list_standard)
 
-        # LCB Selection for Deoxy Ceramides
+        # 2. Deoxy Ceramides
         layout.addWidget(QLabel("\n1-Deoxy Ceramide LCBs (1 OH) - Select multiple:"))
         self.lcb_list_doxcer = QListWidget()
         self.lcb_list_doxcer.setSelectionMode(QAbstractItemView.MultiSelection)
 
-        doxcer_lcbs = ["16:0;1", "16:1;1", "17:0;1", "17:1;1",
-                       "18:0;1", "18:1;1", "18:2;1",
-                       "19:0;1", "19:1;1", "20:0;1", "20:1;1"]
+        # FIX: Load options from backend
+        if hasattr(gslgen, 'SUPPORTED_DOX_LCBS'):
+            dox_options = gslgen.SUPPORTED_DOX_LCBS
+        else:
+            # Fallback
+            dox_options = ["16:0;1", "16:1;1", "17:0;1", "17:1;1",
+                           "18:0;1", "18:1;1", "18:2;1",
+                           "19:0;1", "19:1;1", "20:0;1", "20:1;1"]
 
-        for lcb in doxcer_lcbs:
+        for lcb in dox_options:
             self.lcb_list_doxcer.addItem(lcb)
 
+        # Restore saved selections
+        current_dox_selection = config["lcb_selections"].get("doxCer", [])
         for i in range(self.lcb_list_doxcer.count()):
             item = self.lcb_list_doxcer.item(i)
-            if item.text() in config["lcb_selections"]["doxCer"]:
+            if item.text() in current_dox_selection:
                 item.setSelected(True)
 
         layout.addWidget(self.lcb_list_doxcer)
@@ -111,7 +127,7 @@ class ConfigDialog(QDialog):
             self.even_chain_checkbox.setChecked(True)
         layout.addWidget(self.even_chain_checkbox)
 
-        # ========== FATTY ACID UNSATURATIONS (ONLY ONE INSTANCE) ==========
+        # ========== FATTY ACID UNSATURATIONS ==========
         layout.addWidget(QLabel("\nFatty Acid Unsaturations:"))
         self.unsat_checkboxes = {}
         unsat_layout = QHBoxLayout()
@@ -283,8 +299,6 @@ class ConfigDialog(QDialog):
         except Exception:
             self.preview_label.setText("Preview unavailable")
 
-
-
 class GSLGui(QWidget):
     def __init__(self):
         super().__init__()
@@ -434,7 +448,7 @@ class GSLGui(QWidget):
 
         lcb_layout = QHBoxLayout()
         lcb_layout.addWidget(QLabel("Label Keywords:"))
-        self.lcb_input = QLineEdit("LCB,precursor,HG(-Hex")
+        self.lcb_input = QLineEdit("LCB,precursor,HG(-")
         lcb_layout.addWidget(self.lcb_input)
         label_layout.addLayout(lcb_layout)
 
@@ -629,7 +643,7 @@ class GSLGui(QWidget):
         citation_link = "https://github.com/ahuelsmeier/gsl-transition-generator"
 
         about_text = """
-        <h2>GSL & Ceramide Transition Generator v1.0.3</h2>
+        <h2>GSL & Ceramide Transition Generator v1.0.4</h2>
         <p><b>Author:</b> Andreas J. Hülsmeier</p>
         <p><b>Organization:</b> University of Zurich, University Hospital Zurich</p>
         <p><b>Email:</b> andreas.huelsmeier@uzh.ch</p>
@@ -781,7 +795,7 @@ please visit the project repository for citation information:</p>
         self.isotope_input.setText(isotope_config.get('gsl_isotope', 'M2DN15'))
         self.cer_isotope_input.setText(isotope_config.get('cer_isotope', 'M2DN15'))
         self.doxcer_isotope_input.setText(isotope_config.get('doxcer_isotope', 'M3D'))
-        self.lcb_input.setText(isotope_config.get('label_keywords', 'LCB,precursor,HG(-Hex'))
+        self.lcb_input.setText(isotope_config.get('label_keywords', 'LCB,precursor,HG(-'))
         self.blank_mz_checkbox.setChecked(isotope_config.get('blank_mz', False))
         self.update_adduct_visibility()
 

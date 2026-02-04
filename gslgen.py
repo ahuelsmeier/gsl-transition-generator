@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 """
-GSL + Ceramide Transition Generator - Version 1.0.3
+GSL + Ceramide Transition Generator - Version 1.0.4
 
 author: Andreas J. Hülsmeier
 copyright: Copyright 2025, Andreas J. Hülsmeier / University of Zurich, University Hospital Zurich
 license: MIT
-version: 1.0.3
+version: 1.0.4
 maintainer: Andreas J. Hülsmeier
 email: andreas.huelsmeier@uzh.ch
 status: Prototype
@@ -137,6 +137,19 @@ def calculate_isotope_mass_shift(isotope_dict: Dict[str, int]) -> float:
 class ConfigManager:
     """Manage user configuration for LCB and fatty acid selections"""
 
+    # Define the Universe of supported LCBs (Source of Truth)
+    SUPPORTED_STANDARD_LCBS = [
+        "16:0;2", "16:1;2", "17:0;2", "17:1;2",
+        "18:0;2", "18:0;3", "18:1;2", "18:2;2",
+        "19:0;2", "19:1;2", "20:0;2", "20:1;2"
+    ]
+
+    SUPPORTED_DOX_LCBS = [
+        "16:0;1", "16:1;1", "17:0;1", "17:1;1",
+        "18:0;1", "18:1;1", "18:2;1",
+        "19:0;1", "19:1;1", "20:0;1", "20:1;1"
+    ]
+
     CONFIG_FILE = "gsl_config.json"
 
     DEFAULT_CONFIG = {
@@ -227,7 +240,7 @@ class ConfigManager:
                 "gsl_isotope": "M2DN15",
                 "cer_isotope": "M2DN15",
                 "doxcer_isotope": "M3D",
-                "label_keywords": "LCB,precursor,HG(-Hex",
+                "label_keywords": "LCB,precursor,HG(-",
                 "blank_mz": False
             }
         }
@@ -359,7 +372,7 @@ class LipidDatabase:
     def get_structure_description(cls, lipid_class: str) -> str:
         structures = {
             'doxCer': 'headless, 1-deoxy-Ceramide',
-            'Cer': 'HO-',
+            'Cer': 'Ceramide',
             'Hex': 'β-D-Glc- or β-D-Gal-linked Ceramide (Hexosylceramide)',
             'SM4': '3-O-sulfated Gal-Cer (Sulfatide)',
             'Lac': 'Galβ1-4Glc-Cer (Lactosyl-Ceramide)',
@@ -1055,7 +1068,7 @@ class GSLFragmentRules:
             "HG(-HexNAc,221)": {'C': 8, 'H': 15, 'N': 1, 'O': 6},
             "HG(-HexNAcHex,383)": {'C': 14, 'H': 25, 'N': 1, 'O': 11},      # HexNAc + Hex
             "HG(-HexNAc2Hex,586)": {'C': 22, 'H': 38, 'N': 2, 'O': 16},
-            "HG(-HexNAc4Hex4,1478)": {'C': 56, 'H': 94, 'N': 4, 'O': 44}  # HexNAc4Hex4
+            "HG(-HexNAc4Hex4,1460)": {'C': 56, 'H': 92, 'N': 4, 'O': 40}  # HexNAc4Hex4 Y-ion
         }
 
         result = []
@@ -1372,7 +1385,7 @@ class GSLFragmentRules:
                     ("HG(HexNAcHex,365)", "C14H23NO10", 366.1395, True),     # HexNAc + Hex -H2O
                     ("HG(NeuAc2Hex,744)", "C28H44N2O21", 745.2509, True),     # NeuAc2 + Hex -H2O, double cleaved fragment B3Y2β
                     ("HG(Neu5Ac2HexNAcHex,947)", "C36H57N3O26", 948.3303, True),     # NeuAc2 + HexNAc + Hex -H2O
-                    ("HG(Neu5Ac2HexNAcHex2,1109)", "C14H25NO11", 1110.3831, True),     # Full HG, NeuAc2 + HexNAc + Hex2 -H2O
+                    ("HG(Neu5Ac2HexNAcHex2,1109)", "C42H67N3O31", 1110.3831, True),     # Full HG, NeuAc2 + HexNAc + Hex2 -H2O
                 ])
 
         elif gsl_class.startswith('GT'):
@@ -1731,13 +1744,11 @@ class NegativeFragmentRules:
 
         return fragments
 
-    @staticmethod
+@staticmethod
     def get_fa_fragments_negative(fa_type: str):
         """
-        Generate fatty acid fragments for negative ion mode from ceramide-based lipids.
-
-        In sphingolipids, FA is amide-linked: LCB-NH-CO-FA
-
+        Generate fatty acid fragments for negative ion mode.
+        Dominant fragment: Carboxylate anion [RCOO]-
         """
         fragments = []
 
@@ -1748,48 +1759,56 @@ class NegativeFragmentRules:
 
         carbon = int(match.group(1))
         double_bonds = int(match.group(2))
-        h_count = 2 * carbon - 2 * double_bonds
+        h_count = 2 * carbon - 2 * double_bonds  # H count for Neutral FA (CnH2nO2)
 
         # =====================================================================
-        # 1. FA+(HN) - Retains amide fragment with carbonyl
+        # 1. Carboxylate Anion [R-COO]-
         # =====================================================================
-        # Fragment: R-CO-NH with only the carbonyl oxygen
-        # Formula: CnH(2n-2db+1)NO (ONE oxygen from C=O)
+        # We define the NEUTRAL fatty acid (R-COOH).
+        # The main loop sees the flag is False, so it calculates: (Mass - Proton)
+        # resulting in the correct [R-COO]- m/z.
+
+        neutral_formula = f"C{carbon}H{h_count}O2"
+
+        neutral_fa_mass = (
+            carbon * ATOMIC_MASSES['C'] +
+            h_count * ATOMIC_MASSES['H'] +
+            2 * ATOMIC_MASSES['O']
+        )
+
+        fragments.append((f"FA {fa_type} [RCOO]-", neutral_formula, neutral_fa_mass, False))
+
+        # =====================================================================
+        # 2. Amide/Adduct Fragments (Minor/Diagnostic)
+        # =====================================================================
+        # FA+(HN) - Retains amide fragment with carbonyl
         fa_hn_formula = f"C{carbon}H{h_count+1}NO"
         fa_hn_mass = (
             carbon * ATOMIC_MASSES['C'] +
             (h_count + 1) * ATOMIC_MASSES['H'] +
             1 * ATOMIC_MASSES['N'] +
-            1 * ATOMIC_MASSES['O'] -  # Only 1 O (carbonyl)
-            ATOMIC_MASSES['H']  # [M-H]-
+            1 * ATOMIC_MASSES['O'] -
+            ATOMIC_MASSES['H']  # Pre-calculated [M-H]-
         )
 
-        # =====================================================================
-        # 2. FA+(C2H3N) - Acetonitrile adduct with carbonyl
-        # =====================================================================
-        # Adduct: R-CO-NH + CH3CN
-        # Formula: C(n+2)H(2n-2db+3)NO (ONE oxygen from C=O)
+        # FA+(C2H3N) - Acetonitrile adduct
         fa_acn_formula = f"C{carbon+2}H{h_count+3}NO"
         fa_acn_mass = (
             (carbon + 2) * ATOMIC_MASSES['C'] +
             (h_count + 3) * ATOMIC_MASSES['H'] +
             1 * ATOMIC_MASSES['N'] +
-            1 * ATOMIC_MASSES['O'] -  # Only 1 O (carbonyl)
-            ATOMIC_MASSES['H']  # [M-H]-
+            1 * ATOMIC_MASSES['O'] -
+            ATOMIC_MASSES['H']  # Pre-calculated [M-H]-
         )
 
-        # =====================================================================
-        # 3. FA+(C2H3NO) - Acetamide-like adduct
-        # =====================================================================
-        # Adduct with formyl/acetyl group: adds C2H3NO
-        # Formula: C(n+2)H(2n-2db+3)NO2 (TWO oxygens: original + adduct)
+        # FA+(C2H3NO) - Acetamide-like adduct
         fa_c2h3no_formula = f"C{carbon+2}H{h_count+3}NO2"
         fa_c2h3no_mass = (
             (carbon + 2) * ATOMIC_MASSES['C'] +
             (h_count + 3) * ATOMIC_MASSES['H'] +
             1 * ATOMIC_MASSES['N'] +
-            2 * ATOMIC_MASSES['O'] -  # 2 O (carbonyl + adduct)
-            ATOMIC_MASSES['H']  # [M-H]-
+            2 * ATOMIC_MASSES['O'] -
+            ATOMIC_MASSES['H']  # Pre-calculated [M-H]-
         )
 
         fragments.extend([
@@ -1799,8 +1818,6 @@ class NegativeFragmentRules:
         ])
 
         return fragments
-
-
 
 
 class CeramideFragmentRules:
@@ -2237,7 +2254,7 @@ def generate_transitions(lipid_class: str, charge_states: List[int] = [1],
 
                 elif adduct.polarity == 'negative':
                     # === NEGATIVE ION MODE ===
-                    # Negative-mode headgroup fragments (lipid-class specific)
+                    # Negative-mode headgroup fragments
                     hg_fragments_neg = GSLFragmentRules.get_headgroup_fragments_negative(lipid_class, formula)
                     for frag in hg_fragments_neg:
                         if len(frag) == 4:  # 4 elements (with diagnostic flag)
@@ -2245,14 +2262,10 @@ def generate_transitions(lipid_class: str, charge_states: List[int] = [1],
                         else:  # 3 elements (from loss generators)
                             frag_name, frag_formula, frag_mass = frag
                             is_anion = False  # Loss fragments are neutral
-                        # Calculate m/z based on fragment type, always singly charged
+                        # Calculate m/z based on fragment type
                         if is_anion:
                             # Already deprotonated (e.g., sialic acid anion)
                             frag_mz = frag_mass
-                        elif frag_name.startswith("HG(-"):
-                            # Headgroup loss: add H2O for glycosidic cleavage, then deprotonate
-                            H2O_MASS = 18.0105647
-                            frag_mz = frag_mass + H2O_MASS - PROTON_MASS
                         else:
                             # Other fragments: just deprotonate
                             frag_mz = frag_mass - PROTON_MASS
@@ -2287,12 +2300,9 @@ def generate_transitions(lipid_class: str, charge_states: List[int] = [1],
                                 matched_count += 1
                                 logger.debug(f"Matched fragment: {frag_name}")
 
-                                # Negative mode: (M + H2O - 2H) / 2
-                                if frag_name.startswith("HG(-"):
-                                    H2O_MASS = 18.0105647
-                                    doubly_charged_mz = (frag_mass + H2O_MASS - 2 * PROTON_MASS) / 2
-                                else:
-                                    doubly_charged_mz = (frag_mass - 2 * PROTON_MASS) / 2
+                                # Negative mode: [M-2H]2- calculation
+                                # (Neutral_Mass - 2 * Proton_Mass) / 2
+                                doubly_charged_mz = (frag_mass - 2 * PROTON_MASS) / 2
 
                                 transitions.append({
                                     'Molecule List Name': lipid_class,
@@ -2468,7 +2478,7 @@ def blank_mz_values(df: pd.DataFrame) -> pd.DataFrame:
 
 def add_isotope_labels(df: pd.DataFrame, isotope: str = 'M2DN15',
                        doxcer_isotope: str = 'M3D', cer_isotope: str = 'M2DN15',
-                       lcb: str = "LCB,precursor,HG(-Hex") -> pd.DataFrame:
+                       lcb: str = "LCB,precursor,HG(-") -> pd.DataFrame:
     """Add isotope labels WITH calculated m/z values."""
 
     df.rename(columns=lambda c: c.lstrip('\ufeff').strip(), inplace=True)
@@ -2546,9 +2556,9 @@ def add_isotope_labels(df: pd.DataFrame, isotope: str = 'M2DN15',
     # Calculate PRODUCT m/z for labeled products
     if 'Product m/z' in heavy.columns:
         heavy.loc[:, 'Product m/z'] = heavy.apply(
-            lambda row: round(row['Product m/z'] + row['Mass Shift'], 4)
+            lambda row: round(row['Product m/z'] + (row['Mass Shift'] / abs(row['Product Charge'])), 4)
             if pd.notna(row['Product m/z']) and row['Product m/z'] != '' and
-               should_label_product(row['Product Name'], row['Product Formula'])
+            should_label_product(row['Product Name'], row['Product Formula'])
             else row['Product m/z'],
             axis=1
         )
@@ -2594,7 +2604,7 @@ Examples:
     parser.add_argument('--isotope', default='M2DN15', help='Isotope token for GSLs')
     parser.add_argument('--cer-isotope', default='M2DN15', help='Isotope token for Cer')
     parser.add_argument('--doxcer-isotope', default='M3D', help='Isotope token for doxCer')
-    parser.add_argument('--lcb', default='LCB,precursor,HG(-Hex', help='Label keywords')
+    parser.add_argument('--lcb', default='LCB,precursor,HG(-', help='Label keywords')
     parser.add_argument('--blank-mz', action='store_true', help='Blank ALL m/z values in light and heavy rows')
 
     args = parser.parse_args()
