@@ -1745,7 +1745,7 @@ class NegativeFragmentRules:
         return fragments
 
 @staticmethod
-    def get_fa_fragments_negative(fa_type: str):
+def get_fa_fragments_negative(fa_type: str):
         """
         Generate fatty acid fragments for negative ion mode.
         Dominant fragment: Carboxylate anion [RCOO]-
