@@ -1744,8 +1744,8 @@ class NegativeFragmentRules:
 
         return fragments
 
-@staticmethod
-def get_fa_fragments_negative(fa_type: str):
+    @staticmethod
+    def get_fa_fragments_negative(fa_type: str):
         """
         Generate fatty acid fragments for negative ion mode.
         Dominant fragment: Carboxylate anion [RCOO]-
@@ -2416,7 +2416,15 @@ def generate_transitions(lipid_class: str, charge_states: List[int] = [1],
                     # Negative-mode LCB fragments (universal for all GSLs)
                     lcb_fragments_neg = NegativeFragmentRules.get_lcb_fragments_negative(lcb_type)
 
-                    for frag_name, frag_formula, frag_mass, _ in lcb_fragments_neg:
+                    # Check is_anion flag
+                    for frag_name, frag_formula, frag_mass, is_anion in lcb_fragments_neg:
+
+                        # Calculate m/z based on flag
+                        if is_anion:
+                            frag_mz = frag_mass
+                        else:
+                            frag_mz = frag_mass - PROTON_MASS
+
                         transitions.append({
                             'Molecule List Name': lipid_class,
                             'Molecule': precursor_name,
@@ -2427,7 +2435,7 @@ def generate_transitions(lipid_class: str, charge_states: List[int] = [1],
                             'Product Name': frag_name,
                             'Product Formula': frag_formula,
                             'Product Adduct': fragment_adduct,
-                            'Product m/z': round(frag_mass, 4),
+                            'Product m/z': round(frag_mz, 4),
                             'Product Charge': fragment_charge
                         })
 
@@ -2436,7 +2444,15 @@ def generate_transitions(lipid_class: str, charge_states: List[int] = [1],
                         fa_type = species_name.split('/')[1]
                         fa_fragments_neg = NegativeFragmentRules.get_fa_fragments_negative(fa_type)
 
-                        for frag_name, frag_formula, frag_mass, _ in fa_fragments_neg:
+                        # Check is_anion flag
+                        for frag_name, frag_formula, frag_mass, is_anion in fa_fragments_neg:
+
+                            # Calculate m/z based on flag
+                            if is_anion:
+                                frag_mz = frag_mass
+                            else:
+                                frag_mz = frag_mass - PROTON_MASS
+
                             transitions.append({
                                 'Molecule List Name': lipid_class,
                                 'Molecule': precursor_name,
@@ -2447,7 +2463,7 @@ def generate_transitions(lipid_class: str, charge_states: List[int] = [1],
                                 'Product Name': frag_name,
                                 'Product Formula': frag_formula,
                                 'Product Adduct': fragment_adduct,
-                                'Product m/z': round(frag_mass, 4),
+                                'Product m/z': round(frag_mz, 4),
                                 'Product Charge': fragment_charge
                             })
 
