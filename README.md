@@ -91,7 +91,7 @@ author = {Hülsmeier, Andreas J.},
 title = {GSL & Ceramide Transition Generator},
 year = 2025,
 publisher = {Zenodo},
-version = {v1.0.0},
+version = {v1.0.5},
 doi = {10.5281/zenodo.17702284},
 url = {https://doi.org/10.5281/zenodo.17702284}
 }
