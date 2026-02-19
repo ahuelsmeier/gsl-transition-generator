@@ -82,7 +82,7 @@ For detailed usage instructions, configuration options, and scientific rationale
 
 If you use this software in your research, please cite:
 
-> Hülsmeier, A.J. (2025). GSL & Ceramide Transition Generator (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.17702284
+> Hülsmeier, A.J. (2025). GSL & Ceramide Transition Generator (v1.0.5). Zenodo. https://doi.org/10.5281/zenodo.17702284
 
 <details>
 <summary>BibTeX format</summary>
