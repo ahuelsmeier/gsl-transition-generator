@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 """
-GSL + Ceramide Transition Generator - Version 1.0.4
+GSL + Ceramide Transition Generator - Version 1.0.5
 
 author: Andreas J. Hülsmeier
 copyright: Copyright 2025, Andreas J. Hülsmeier / University of Zurich, University Hospital Zurich
 license: MIT
-version: 1.0.4
+version: 1.0.5
 maintainer: Andreas J. Hülsmeier
 email: andreas.huelsmeier@uzh.ch
 status: Prototype

@@ -7,7 +7,7 @@ A graphical interface for generating lipid transition lists
 __author__ = "Andreas J. Hülsmeier"
 __copyright__ = "Copyright 2025, Andreas J. Hülsmeier / University of Zurich, University Hospital Zurich"
 __license__ = "MIT"
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 __maintainer__ = "Andreas J. Hülsmeier"
 __email__ = "andreas.huelsmeier@uzh.ch"
 __status__ = "Prototype"
@@ -643,7 +643,7 @@ class GSLGui(QWidget):
         citation_link = "https://github.com/ahuelsmeier/gsl-transition-generator"
 
         about_text = """
-        <h2>GSL & Ceramide Transition Generator v1.0.4</h2>
+        <h2>GSL & Ceramide Transition Generator v1.0.5</h2>
         <p><b>Author:</b> Andreas J. Hülsmeier</p>
         <p><b>Organization:</b> University of Zurich, University Hospital Zurich</p>
         <p><b>Email:</b> andreas.huelsmeier@uzh.ch</p>
