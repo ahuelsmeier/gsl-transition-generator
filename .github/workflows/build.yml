@@ -33,8 +33,7 @@ jobs:
         with:
           nuitka-version: main
           script-name: gui_gslgen.py
-          mode: onefile
-          follow-imports: true
+          mode: standalone
           enable-plugins: pyside6
           windows-console-mode: disable
           mingw64: true
@@ -46,15 +45,25 @@ jobs:
             app_icon.icns=app_icon.icns
             icon_256.png=icon_256.png
 
+      - name: Archive Build Folder
+        shell: python
+        run: |
+          import shutil
+          import os
+
+          output_zip = 'GSL_Generator_${{ matrix.os }}'
+
+          # Check if Nuitka created a macOS .app bundle or a standard .dist folder
+          if os.path.exists('build/gui_gslgen.app'):
+              shutil.make_archive(output_zip, 'zip', root_dir='build', base_dir='gui_gslgen.app')
+          elif os.path.exists('build/gui_gslgen.dist'):
+              shutil.make_archive(output_zip, 'zip', root_dir='build', base_dir='gui_gslgen.dist')
+          else:
+              print('Error: Build folder not found!')
+              exit(1)
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}-executable
-          path: |
-            build/*.exe
-            build/*.bin
-            build/*.app/**/*
-          include-hidden-files: true
-
-
-
+          path: GSL_Generator_${{ matrix.os }}.zip
