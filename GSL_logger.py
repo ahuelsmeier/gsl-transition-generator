@@ -9,7 +9,7 @@ REPO = "gsl-transition-generator"
 TOKEN = os.getenv("GITHUB_TOKEN")
 
 # REPLACE THIS with your actual Zenodo Record ID (the number at the end of the URL)
-ZENODO_RECORD_ID = "YOUR_ZENODO_ID_HERE" 
+ZENODO_RECORD_ID = "18901586" 
 
 if not TOKEN:
     raise ValueError("Missing GITHUB_TOKEN environment variable")
