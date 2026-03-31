@@ -8,7 +8,7 @@ OWNER = "ahuelsmeier"
 REPO = "gsl-transition-generator"
 TOKEN = os.getenv("GITHUB_TOKEN")
 
-# REPLACE THIS with your actual Zenodo Record ID (the number at the end of the URL)
+# Make sure this is your actual Zenodo Record ID
 ZENODO_RECORD_ID = "18901586" 
 
 if not TOKEN:
@@ -16,7 +16,7 @@ if not TOKEN:
 
 EXCEL_FILE = "github_traffic_log.xlsx"
 
-GITHUB_BASE_URL = f"https://api.github.com/repos/{OWNER}/{REPO}/traffic"
+GITHUB_BASE_URL = f"https://api.github.com/repos/{OWNER}/{REPO}"
 ZENODO_BASE_URL = f"https://zenodo.org/api/records/{ZENODO_RECORD_ID}"
 
 headers_gh = {
@@ -25,11 +25,26 @@ headers_gh = {
 }
 
 # ===== FETCH FUNCTIONS =====
-def fetch_github(endpoint):
-    url = f"{GITHUB_BASE_URL}/{endpoint}"
+def fetch_github_traffic(endpoint):
+    url = f"{GITHUB_BASE_URL}/traffic/{endpoint}"
     r = requests.get(url, headers=headers_gh)
     r.raise_for_status()
     return r.json()
+
+def fetch_github_releases():
+    """Fetches total download counts for all compiled release assets (.exe, .zip, etc)"""
+    url = f"{GITHUB_BASE_URL}/releases"
+    r = requests.get(url, headers=headers_gh)
+    r.raise_for_status()
+    releases = r.json()
+    
+    total_downloads = 0
+    # Loop through all releases and sum up downloads of all attached files
+    for release in releases:
+        for asset in release.get("assets", []):
+            total_downloads += asset.get("download_count", 0)
+            
+    return total_downloads
 
 def fetch_zenodo():
     """Fetches cumulative stats from Zenodo."""
@@ -39,8 +54,9 @@ def fetch_zenodo():
     return data.get("stats", {})
 
 def get_today_summary():
-    views = fetch_github("views")
-    clones = fetch_github("clones")
+    views = fetch_github_traffic("views")
+    clones = fetch_github_traffic("clones")
+    releases = fetch_github_releases()
     zenodo = fetch_zenodo()
 
     today = datetime.utcnow().strftime("%Y-%m-%d")
@@ -52,7 +68,8 @@ def get_today_summary():
         "clones_total": clones.get("count", 0),
         "clones_unique": clones.get("uniques", 0),
         "zenodo_views": zenodo.get("views", 0),
-        "zenodo_downloads": zenodo.get("downloads", 0)
+        "zenodo_downloads": zenodo.get("downloads", 0),
+        "release_downloads": releases  # The new binary downloads metric!
     }
 
 # ===== EXCEL HANDLING =====
@@ -61,15 +78,9 @@ def init_excel():
     ws = wb.active
     ws.title = "Traffic"
 
-    # Updated headers to include Zenodo
     headers = [
-        "date",
-        "views_total",
-        "views_unique",
-        "clones_total",
-        "clones_unique",
-        "zenodo_views",
-        "zenodo_downloads"
+        "date", "views_total", "views_unique", "clones_total", "clones_unique",
+        "zenodo_views", "zenodo_downloads", "release_downloads"
     ]
     ws.append(headers)
     wb.save(EXCEL_FILE)
@@ -80,6 +91,13 @@ def append_to_excel(data):
 
     wb = load_workbook(EXCEL_FILE)
     ws = wb["Traffic"]
+
+    # --- THE MAGIC UPGRADE TRICK ---
+    # Safely add the new column header to your EXISTING file if it's missing
+    existing_headers = [cell.value for cell in ws[1]]
+    if "release_downloads" not in existing_headers:
+        ws.cell(row=1, column=len(existing_headers)+1, value="release_downloads")
+    # -------------------------------
 
     # Avoid duplicate entries for the same day
     dates = [row[0].value for row in ws.iter_rows(min_row=2)]
@@ -94,7 +112,8 @@ def append_to_excel(data):
         data["clones_total"],
         data["clones_unique"],
         data["zenodo_views"],
-        data["zenodo_downloads"]
+        data["zenodo_downloads"],
+        data["release_downloads"]
     ])
 
     wb.save(EXCEL_FILE)
