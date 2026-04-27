@@ -1,0 +1,39 @@
+name: Daily GSL Analytics Logger
+
+on:
+  schedule:
+    - cron: '0 0 * * *' 
+  workflow_dispatch: 
+
+# This gives the bot explicit permission to write to your repo
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4 # Use @v5 if available in your region
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5 # Updated to @v5 to support Node 24
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install requests openpyxl
+
+      - name: Run Logger
+        env:
+          GITHUB_TOKEN: ${{ secrets.GSL_LOGGER_TOKEN }}
+        run: python GSL_logger.py
+
+      - name: Commit and Push Excel update
+        run: |
+          git config --global user.name "GSL Analytics Bot"
+          git config --global user.email "actions@github.com"
+          # Make sure this matches the filename in GSL_logger.py!
+          git add github_traffic_log.xlsx
+          git commit -m "Auto-update analytics: $(date -u +'%Y-%m-%d')" || exit 0
+          git push
