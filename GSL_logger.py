@@ -67,8 +67,8 @@ def get_today_summary():
         "views_unique": views.get("uniques", 0),
         "clones_total": clones.get("count", 0),
         "clones_unique": clones.get("uniques", 0),
-        "zenodo_views": zenodo.get("views", 0),
-        "zenodo_downloads": zenodo.get("downloads", 0),
+        "zenodo_views": zenodo.get("version_views", 0),
+        "zenodo_downloads": zenodo.get("version_downloads", 0),
         "release_downloads": releases  # The new binary downloads metric!
     }
 
