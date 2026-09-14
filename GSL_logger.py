@@ -1,4 +1,5 @@
 import requests
+import time
 import os
 from datetime import datetime
 from openpyxl import Workbook, load_workbook
@@ -47,11 +48,31 @@ def fetch_github_releases():
     return total_downloads
 
 def fetch_zenodo():
-    """Fetches cumulative stats from Zenodo."""
-    r = requests.get(ZENODO_BASE_URL)
-    r.raise_for_status()
-    data = r.json()
-    return data.get("stats", {})
+    """Fetches cumulative stats from Zenodo with retry logic."""
+    url = ZENODO_BASE_URL
+    max_retries = 3
+    timeout = 10
+
+    for attempt in range(max_retries):
+        try:
+            r = requests.get(url, timeout=timeout)
+            r.raise_for_status()
+            data = r.json()
+            return data.get("stats", {})
+        except requests.exceptions.Timeout:
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt
+                print(f"Timeout on attempt {attempt + 1}/{max_retries}. Retrying in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                raise
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code >= 500 and attempt < max_retries - 1:
+                wait_time = 2 ** attempt
+                print(f"Server error {e.response.status_code} on attempt {attempt + 1}/{max_retries}. Retrying in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                raise
 
 def get_today_summary():
     views = fetch_github_traffic("views")
